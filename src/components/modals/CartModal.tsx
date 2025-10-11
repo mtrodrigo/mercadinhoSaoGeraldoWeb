@@ -71,25 +71,35 @@ export const CartModal = ({ isOpen, onClose, items }: CartModalProps) => {
                   <div className="flex-1">
                     <p className="font-medium leading-tight">{item.name}</p>
                     <p className="text-sm text-gray-600">
-                      {item.qty} x {item.price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                      {item.qty} x{" "}
+                      {item.price.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
                     </p>
                   </div>
                   <div className="font-semibold">
-                    {(item.qty * item.price).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    {(item.qty * item.price).toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
                   </div>
                 </li>
               ))}
+              <div className="flex justify-between border-t pt-3 mt-3">
+                <span className="text-gray-600 mr-2">Total:</span>
+                <span className="font-semibold">
+                  {total.toLocaleString("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  })}
+                </span>
+              </div>
             </ul>
           )}
         </div>
 
         <footer className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-          <div className="text-base">
-            <span className="text-gray-600 mr-2">Total:</span>
-            <span className="font-semibold">
-              {total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-            </span>
-          </div>
           <div className="flex gap-2">
             <button
               onClick={onClose}
@@ -109,4 +119,3 @@ export const CartModal = ({ isOpen, onClose, items }: CartModalProps) => {
     </div>
   );
 };
-

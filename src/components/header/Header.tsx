@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import logo_mercadinho_sao_jose from "../../assets/logo_mercadinho_sao_geraldo.png";
 import { useMemo, useState } from "react";
 import { FiLogIn, FiShoppingCart } from "react-icons/fi";
@@ -11,6 +11,7 @@ export const Header = () => {
     { id: "1", name: "Arroz 5kg", price: 24.9, qty: 1 },
     { id: "2", name: "Feijão 1kg", price: 8.5, qty: 2 },
   ]);
+  const navigate = useNavigate();
   const totalQty = useMemo(
     () => cartItems.reduce((acc, i) => acc + i.qty, 0),
     [cartItems]
@@ -41,7 +42,7 @@ export const Header = () => {
         <nav className="flex items-center justify-center gap-3">
           <button
             type="button"
-            onClick={() => setIsAuth((v) => !v)}
+            onClick={() => navigate("/login") }
             className="h-10 px-4 inline-flex items-center justify-center gap-2 rounded-full border border-green-500 bg-green-50 text-green-600 font-medium hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
             aria-label={isAuth ? "Abrir perfil" : "Entrar"}
             title={isAuth ? "Sair (mock)" : "Entrar"}
