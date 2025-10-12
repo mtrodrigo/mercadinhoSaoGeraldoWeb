@@ -9,7 +9,7 @@ const Login = () => {
                 <input type="password" name="password" id="password" placeholder="Senha" className="border border-green-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-500 mb-4 w-full" />
                 <button type="submit" className="w-full bg-green-500 text-white p-2 rounded-md hover:bg-green-600 transition">Entrar</button>
             </form>
-            <p className="mt-5">Não tem cadastro clique <a className="text-red-500 font-semibold" href="">aqui</a></p>
+            <p className="mt-5">Não tem cadastro clique <a className="text-red-500 font-semibold" href="/register">aqui</a></p>
         </LoginRegisterContainer>
     )
 }
