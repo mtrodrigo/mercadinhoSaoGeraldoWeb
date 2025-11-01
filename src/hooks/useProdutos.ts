@@ -1,16 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import api from "../services/api";
-import type { Produto } from "./types";
+import type { PaginatedResponse, Product } from "../types/api";
 
-async function getProdutos(): Promise<Produto[]> {
-  const response = await api.get("/api/products");
-  return response.data;
+async function getProdutos(busca?: string): Promise<Product[]> {
+  const { data } = await api.get<Product[] | PaginatedResponse<Product>>(
+    "/api/products",
+    {
+      params: busca ? { search: busca } : undefined,
+    }
+  );
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return data.items;
 }
 
-export function useProdutos() {
+export function useProdutos(busca?: string) {
   return useQuery({
-    queryKey: ["produtos"],
-    queryFn: getProdutos,
+    queryKey: ["produtos", busca ?? "todas"],
+    queryFn: () => getProdutos(busca),
     staleTime: 1000 * 60 * 5,
   });
 }
