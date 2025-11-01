@@ -1,82 +1,143 @@
-import { Link, useNavigate } from "react-router";
-import logo_mercadinho_sao_jose from "../../assets/logo_mercadinho_sao_geraldo.png";
 import { useMemo, useState } from "react";
-import { FiLogIn, FiShoppingCart } from "react-icons/fi";
+import { FiChevronDown, FiLogIn, FiLogOut, FiShoppingCart } from "react-icons/fi";
+import { Link, useNavigate } from "react-router";
+import logoMercadinho from "../../assets/logo_mercadinho_sao_geraldo.png";
+import { useAuth } from "../../contexts/AuthContext";
+import { useCart } from "../../contexts/CartContext";
 import { CartModal } from "../modals/CartModal";
 
+const obterIniciais = (nome?: string) => {
+  if (!nome) return "";
+  const partes = nome.trim().split(" ");
+  const primeira = partes[0]?.[0] ?? "";
+  const ultima = partes[partes.length - 1]?.[0] ?? primeira;
+  return `${primeira}${ultima}`.toUpperCase();
+};
+
 export const Header = () => {
-  const [isAuth, setIsAuth] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems] = useState([
-    { id: "1", name: "Arroz 5kg", price: 24.9, qty: 1 },
-    { id: "2", name: "Feijão 1kg", price: 8.5, qty: 2 },
-  ]);
   const navigate = useNavigate();
-  const totalQty = useMemo(
-    () => cartItems.reduce((acc, i) => acc + i.qty, 0),
-    [cartItems]
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { items, totalItems } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const subtotal = useMemo(
+    () => items.reduce((acc, item) => acc + item.preco * item.quantidade, 0),
+    [items]
   );
-  const nome = "Rodrigo Marques Tavares";
-
-  const iniciais = (nome: string) => {
-    const partes = nome.trim().split(" ");
-    const primeiraInicial = partes[0][0].toUpperCase();
-    const ultimaInicial = partes[partes.length - 1][0].toUpperCase();
-    const resultado = primeiraInicial + ultimaInicial;
-
-    return resultado;
-  };
 
   return (
-    <header className="w-full flex px-4 py-1 border-b border-b-green-100 drop-shadow-md drop-shadow-green-200 bg-white mb-5 bg">
-      <div className="flex items-center justify-between max-w-6xl w-full mx-auto">
-        <figure className="">
-          <Link to="/">
-            <img
-              className="w-40"
-              src={logo_mercadinho_sao_jose}
-              alt="Logo Mercadinho São José"
-            />
+    <header className="sticky top-0 z-40 border-b border-green-100 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
+        <Link to="/" className="flex items-center gap-3">
+          <img
+            className="w-36"
+            src={logoMercadinho}
+            alt="Logo Mercadinho São Geraldo"
+          />
+        </Link>
+
+        <nav className="hidden items-center gap-6 text-sm font-medium text-gray-600 md:flex">
+          <Link to="/" className="transition hover:text-green-700">
+            Início
           </Link>
-        </figure>
-        <nav className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/login") }
-            className="h-10 px-4 inline-flex items-center justify-center gap-2 rounded-full border border-green-500 bg-green-50 text-green-600 font-medium hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
-            aria-label={isAuth ? "Abrir perfil" : "Entrar"}
-            title={isAuth ? "Sair (mock)" : "Entrar"}
-          >
-            {isAuth ? (
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white text-sm">
-                {iniciais(nome)}
-              </span>
-            ) : (
-              <>
-                <FiLogIn />
-                <span>Entrar</span>
-              </>
-            )}
-          </button>
+          {isAuthenticated && (
+            <Link to="/meus-pedidos" className="transition hover:text-green-700">
+              Meus pedidos
+            </Link>
+          )}
+          {isAdmin && (
+            <Link to="/admin" className="transition hover:text-green-700">
+              Painel administrativo
+            </Link>
+          )}
+        </nav>
+
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setIsCartOpen(true)}
-            className="relative inline-flex items-center justify-center h-10 w-10 rounded-full border border-gray-200 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-green-200 bg-white text-green-700 transition hover:bg-green-50"
             aria-label="Abrir carrinho"
           >
-            <FiShoppingCart className="text-2xl" />
-            {totalQty > 0 && (
-              <span className="absolute -right-1 -top-1 flex items-center justify-center bg-green-600 text-white rounded-full h-5 min-w-5 px-1 text-[10px] font-semibold">
-                {totalQty}
+            <FiShoppingCart className="text-xl" />
+            {totalItems > 0 && (
+              <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-[10px] font-semibold text-white">
+                {totalItems}
               </span>
             )}
           </button>
-        </nav>
+
+          {isAuthenticated ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-50"
+              >
+                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-xs font-bold uppercase tracking-wider text-white">
+                  {obterIniciais(user?.nome)}
+                </span>
+                <span className="hidden md:inline">{user?.nome.split(" ")[0]}</span>
+                <FiChevronDown />
+              </button>
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-green-100 bg-white p-2 shadow-lg">
+                  <Link
+                    to="/perfil"
+                    className="block rounded-lg px-3 py-2 text-sm text-gray-600 transition hover:bg-green-50 hover:text-green-700"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Meu perfil
+                  </Link>
+                  <Link
+                    to="/meus-pedidos"
+                    className="block rounded-lg px-3 py-2 text-sm text-gray-600 transition hover:bg-green-50 hover:text-green-700"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Pedidos
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="block rounded-lg px-3 py-2 text-sm text-gray-600 transition hover:bg-green-50 hover:text-green-700"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Administração
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      setIsMenuOpen(false);
+                      navigate("/");
+                    }}
+                    className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
+                  >
+                    <FiLogOut /> Sair
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="inline-flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+            >
+              <FiLogIn />
+              Entrar
+            </button>
+          )}
+        </div>
       </div>
+
       <CartModal
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        items={cartItems}
+        items={items}
+        subtotal={subtotal}
       />
     </header>
   );

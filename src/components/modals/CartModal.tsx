@@ -1,23 +1,22 @@
 import { useEffect } from "react";
-
-type CartItem = {
-  id: string;
-  name: string;
-  price: number;
-  qty: number;
-  image?: string;
-};
+import { useNavigate } from "react-router";
+import { useCart } from "../../contexts/CartContext";
+import type { CartItem } from "../../contexts/CartContext";
 
 type CartModalProps = {
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
+  subtotal: number;
 };
 
-export const CartModal = ({ isOpen, onClose, items }: CartModalProps) => {
+export const CartModal = ({ isOpen, onClose, items, subtotal }: CartModalProps) => {
+  const navigate = useNavigate();
+  const { updateItemQuantity, removeItem } = useCart();
+
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
     if (isOpen) window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -25,96 +24,145 @@ export const CartModal = ({ isOpen, onClose, items }: CartModalProps) => {
 
   if (!isOpen) return null;
 
-  const total = items.reduce((acc, i) => acc + i.price * i.qty, 0);
-
   return (
     <div
-      className="fixed right-0 top-19 z-50 flex items-center justify-center"
-      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-start justify-end bg-black/30 pt-20"
       role="dialog"
+      aria-modal="true"
+      onClick={onClose}
     >
       <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-        aria-hidden
-      />
-      <div className="relative z-10 w-full max-w-lg rounded-lg bg-white shadow-xl">
-        <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h2 className="text-lg font-semibold">Seu Carrinho</h2>
+        className="h-full w-full max-w-md overflow-hidden rounded-l-2xl bg-white shadow-xl"
+        role="document"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="flex items-center justify-between border-b border-green-100 px-5 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-green-700">Seu carrinho</h2>
+            <p className="text-xs text-gray-500">
+              Revise os produtos antes de finalizar o pedido.
+            </p>
+          </div>
           <button
             onClick={onClose}
-            className="rounded-md px-2 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
-            aria-label="Fechar"
+            className="rounded-full border border-green-100 px-3 py-1 text-sm text-gray-500 transition hover:bg-green-50 hover:text-green-700"
+            aria-label="Fechar carrinho"
           >
-            ✕
+            Fechar
           </button>
         </header>
 
-        <div className="max-h-80 overflow-auto px-4 py-3">
-          {items.length === 0 ? (
-            <p className="text-gray-600">Seu carrinho está vazio.</p>
-          ) : (
-            <ul className="space-y-3">
-              {items.map((item) => (
-                <li key={item.id} className="flex items-center gap-3">
-                  {item.image ? (
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="h-12 w-12 rounded object-cover border"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded bg-gray-100 border flex items-center justify-center text-sm text-gray-500">
-                      IMG
+        <div className="flex h-[60vh] flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            {items.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                Seu carrinho está vazio. Adicione produtos para continuar.
+              </p>
+            ) : (
+              <ul className="space-y-4">
+                {items.map((item) => (
+                  <li key={item.produtoId} className="flex items-start gap-3">
+                    {item.imagemUrl ? (
+                      <img
+                        src={item.imagemUrl}
+                        alt={item.nome}
+                        className="h-16 w-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-green-100 bg-green-50 text-xs text-green-600">
+                        Sem imagem
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-green-700">
+                            {item.nome}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {item.preco.toLocaleString("pt-BR", {
+                              style: "currency",
+                              currency: "BRL",
+                            })}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.produtoId)}
+                          className="text-xs text-red-500 transition hover:text-red-700"
+                        >
+                          Remover
+                        </button>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-green-200 px-2 py-1 text-xs text-green-700">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateItemQuantity(item.produtoId, item.quantidade - 1)
+                            }
+                            className="px-2 text-lg"
+                          >
+                            −
+                          </button>
+                          <span className="w-6 text-center font-semibold">
+                            {item.quantidade}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateItemQuantity(item.produtoId, item.quantidade + 1)
+                            }
+                            className="px-2 text-lg"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="text-sm font-semibold text-green-700">
+                          {(item.preco * item.quantidade).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium leading-tight">{item.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {item.qty} x{" "}
-                      {item.price.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      })}
-                    </p>
-                  </div>
-                  <div className="font-semibold">
-                    {(item.qty * item.price).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </div>
-                </li>
-              ))}
-              <div className="flex justify-between border-t pt-3 mt-3">
-                <span className="text-gray-600 mr-2">Total:</span>
-                <span className="font-semibold">
-                  {total.toLocaleString("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  })}
-                </span>
-              </div>
-            </ul>
-          )}
-        </div>
-
-        <footer className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="rounded-md border px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              Continuar comprando
-            </button>
-            <button
-              className="rounded-md bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-              onClick={() => alert("Finalização não implementada.")}
-            >
-              Finalizar compra
-            </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-        </footer>
+          <footer className="border-t border-green-100 px-5 py-4">
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>Subtotal</span>
+              <strong className="text-lg text-green-700">
+                {subtotal.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
+              </strong>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 rounded-full border border-green-200 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-50"
+              >
+                Continuar comprando
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  navigate("/checkout");
+                }}
+                className="flex-1 rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+                disabled={items.length === 0}
+              >
+                Finalizar pedido
+              </button>
+            </div>
+          </footer>
+        </div>
       </div>
     </div>
   );
